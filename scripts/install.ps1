@@ -1,12 +1,19 @@
 [CmdletBinding()]
 param(
     [string]$EtsRoot = 'C:\Program Files (x86)\ETS',
-    [string]$PackageRoot = $PSScriptRoot,
+    [string]$PackageRoot,
     [switch]$SkipAdministratorCheck,
     [switch]$SkipProcessCheck
 )
 
 $ErrorActionPreference = 'Stop'
+
+if ([string]::IsNullOrWhiteSpace($PackageRoot)) {
+    $PackageRoot = $PSScriptRoot
+}
+if ([string]::IsNullOrWhiteSpace($PackageRoot)) {
+    throw 'The package directory could not be resolved. Pass -PackageRoot explicitly.'
+}
 
 if (-not $SkipAdministratorCheck) {
     $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())

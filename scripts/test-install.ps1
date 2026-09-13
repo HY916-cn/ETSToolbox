@@ -31,6 +31,15 @@ function Invoke-TestInstall([string]$PackageRoot, [string]$EtsRoot) {
         -SkipProcessCheck
 }
 
+function Invoke-TestInstallWithDefaultPackageRoot([string]$PackageRoot, [string]$EtsRoot) {
+    $packagedInstaller = Join-Path $PackageRoot 'install.ps1'
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'install.ps1') -Destination $packagedInstaller -Force
+    & $packagedInstaller `
+        -EtsRoot $EtsRoot `
+        -SkipAdministratorCheck `
+        -SkipProcessCheck
+}
+
 $testRoot = Join-Path ([IO.Path]::GetTempPath()) ("etstoolbox-install-test-" + [Guid]::NewGuid().ToString('N'))
 try {
     $packageRoot = Join-Path $testRoot 'package'
@@ -40,7 +49,7 @@ try {
     $missingDirectoryRoot = Join-Path $testRoot 'missing-directory'
     New-Item -ItemType Directory -Path $missingDirectoryRoot -Force | Out-Null
     [IO.File]::WriteAllText((Join-Path $missingDirectoryRoot 'ETSShell.exe'), 'test')
-    Invoke-TestInstall $packageRoot $missingDirectoryRoot
+    Invoke-TestInstallWithDefaultPackageRoot $packageRoot $missingDirectoryRoot
     Assert-True (Test-Path -LiteralPath (Join-Path $missingDirectoryRoot 'etstoolbox/index.js') -PathType Leaf) 'missing etstoolbox directory was not created'
     Assert-True (Test-Path -LiteralPath (Join-Path $missingDirectoryRoot 'etstoolbox/css/index.css') -PathType Leaf) 'nested CSS directory was not created'
 
@@ -54,7 +63,7 @@ try {
     $backupCss = Get-ChildItem -LiteralPath $missingIndexRoot -Filter 'ETSToolbox.backup-*' -Directory | ForEach-Object { Join-Path $_.FullName 'etstoolbox/css/index.css' } | Where-Object { Test-Path -LiteralPath $_ }
     Assert-True (($backupCss | Measure-Object).Count -eq 1) 'existing CSS was not backed up'
 
-    Write-Host 'Installer tests: PASS (missing directory, missing index.js)'
+    Write-Host 'Installer tests: PASS (default package root, missing directory, missing index.js)'
 }
 finally {
     if (Test-Path -LiteralPath $testRoot) { Remove-Item -LiteralPath $testRoot -Recurse -Force }
