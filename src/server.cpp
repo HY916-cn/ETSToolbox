@@ -2,11 +2,63 @@
 #include<filesystem>
 #include<cstdio>
 #include<Windows.h>
-#include<Shellapi.h>
 #include"server.h"
 #include"utils.h"
 #include"logger.h"
 #include<fstream>
+#include<format>
+
+namespace {
+	bool launchAnswerConsole(const std::filesystem::path& scriptPath, DWORD& errorCode)
+	{
+		std::wstring systemDirectory(MAX_PATH, L'\0');
+		const UINT systemDirectoryLength = GetSystemDirectoryW(
+			systemDirectory.data(),
+			static_cast<UINT>(systemDirectory.size())
+		);
+		if (systemDirectoryLength == 0 || systemDirectoryLength >= systemDirectory.size()) {
+			errorCode = GetLastError();
+			return false;
+		}
+		systemDirectory.resize(systemDirectoryLength);
+
+		const auto powershellPath = std::filesystem::path(systemDirectory) /
+			L"WindowsPowerShell" / L"v1.0" / L"powershell.exe";
+		if (!std::filesystem::is_regular_file(powershellPath)) {
+			errorCode = ERROR_FILE_NOT_FOUND;
+			return false;
+		}
+
+		std::wstring commandLine = L"\"" + powershellPath.wstring() +
+			L"\" -NoLogo -NoProfile -ExecutionPolicy Bypass -File \"" +
+			scriptPath.wstring() + L"\"";
+		STARTUPINFOW startupInfo{};
+		startupInfo.cb = sizeof(startupInfo);
+		PROCESS_INFORMATION processInfo{};
+		const auto workingDirectory = scriptPath.parent_path().wstring();
+		const BOOL created = CreateProcessW(
+			powershellPath.c_str(),
+			commandLine.data(),
+			nullptr,
+			nullptr,
+			FALSE,
+			CREATE_NEW_CONSOLE | CREATE_UNICODE_ENVIRONMENT,
+			nullptr,
+			workingDirectory.c_str(),
+			&startupInfo,
+			&processInfo
+		);
+		if (!created) {
+			errorCode = GetLastError();
+			return false;
+		}
+
+		CloseHandle(processInfo.hThread);
+		CloseHandle(processInfo.hProcess);
+		errorCode = ERROR_SUCCESS;
+		return true;
+	}
+}
 
 ServerWrapper::ServerWrapper()
 {
@@ -39,27 +91,22 @@ ServerWrapper::ServerWrapper()
 		}
 	});
 	this->server.Post("/api/open_answer_console", [&](const httplib::Request& req, httplib::Response& res) {
-		const auto scriptPath = getStaticFilesDirectory() / "open-answer-console.cmd";
+		const auto scriptPath = getStaticFilesDirectory() / "answer-console.ps1";
 		if (!std::filesystem::is_regular_file(scriptPath)) {
 			Logger::error("答案终端启动脚本不存在：{}", to_byte_string(scriptPath.wstring()));
 			res.status = 404;
-			res.set_content("answer console script not found", "text/plain; charset=utf-8");
+			res.set_content("答案终端启动脚本不存在", "text/plain; charset=utf-8");
 			return;
 		}
 
-		const auto workingDirectory = scriptPath.parent_path().wstring();
-		const auto result = ShellExecuteW(
-			nullptr,
-			L"open",
-			scriptPath.c_str(),
-			nullptr,
-			workingDirectory.c_str(),
-			SW_SHOWNORMAL
-		);
-		if (reinterpret_cast<INT_PTR>(result) <= 32) {
-			Logger::error("无法打开答案终端，ShellExecuteW 错误码：{}", reinterpret_cast<INT_PTR>(result));
+		DWORD errorCode = ERROR_SUCCESS;
+		if (!launchAnswerConsole(scriptPath, errorCode)) {
+			Logger::error("无法启动答案终端，Win32 错误码：{}", errorCode);
 			res.status = 500;
-			res.set_content("failed to open answer console", "text/plain; charset=utf-8");
+			res.set_content(
+				std::format("无法启动系统 PowerShell（Win32 错误码 {}）", errorCode),
+				"text/plain; charset=utf-8"
+			);
 			return;
 		}
 
