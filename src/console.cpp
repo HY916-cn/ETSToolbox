@@ -4,7 +4,7 @@
 void createConsole()
 {
 	if (AllocConsole()) {
-		SetConsoleTitle(L"Eฬýหตอโนา");
+		SetConsoleTitle(L"ETSToolbox");
 		freopen("conout$", "w", stdout);
 		freopen("conout$", "w", stderr);
 	}
