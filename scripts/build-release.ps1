@@ -8,6 +8,12 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+[Console]::InputEncoding = $utf8NoBom
+[Console]::OutputEncoding = $utf8NoBom
+$OutputEncoding = $utf8NoBom
+$env:VSLANG = '1033'
+& "$env:SystemRoot\System32\chcp.com" 65001 | Out-Null
 
 function Invoke-Checked {
     param(
@@ -134,17 +140,20 @@ if (-not (Test-Path -LiteralPath $detoursInclude -PathType Container)) {
 if (-not (Test-Path -LiteralPath $detoursLibrary -PathType Leaf)) {
     throw "Release Detours library was not found: $detoursLibrary"
 }
-Invoke-Checked -FilePath $cmake -ArgumentList @(
+$configureArguments = @(
     '-S', $repoRoot,
     '-B', $buildDir,
     '-G', $generator,
     '-A', 'Win32',
-    "-DCMAKE_TOOLCHAIN_FILE=$toolchain",
     "-DVCPKG_TARGET_TRIPLET=$triplet",
     "-DDETOURS_INCLUDE_DIRS=$detoursInclude",
     "-DDETOURS_LIBRARY=$detoursLibrary",
     '-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL'
 )
+if (-not (Test-Path -LiteralPath (Join-Path $buildDir 'CMakeCache.txt') -PathType Leaf)) {
+    $configureArguments += "-DCMAKE_TOOLCHAIN_FILE=$toolchain"
+}
+Invoke-Checked -FilePath $cmake -ArgumentList $configureArguments
 Invoke-Checked -FilePath $cmake -ArgumentList @('--build', $buildDir, '--config', 'Release', '--target', 'ETSToolbox')
 
 $builtCandidates = @(Get-ChildItem -LiteralPath $buildDir -Filter 'winmm.dll' -File -Recurse | Where-Object { $_.FullName -match '[\\/]Release[\\/]winmm\.dll$' })

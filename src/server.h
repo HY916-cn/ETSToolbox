@@ -3,8 +3,6 @@
 #include<thread>
 #include"utils.h"
 
-#define STATIC_FILES_PATH (getModuleDirectory()/"etstoolbox").string()
-
 class ServerWrapper {
 private:
 	httplib::Server server;

@@ -25,6 +25,11 @@ std::filesystem::path getModuleDirectory()
 	return std::filesystem::path(modulePath).parent_path();
 }
 
+std::filesystem::path getStaticFilesDirectory()
+{
+	return getModuleDirectory() / L"etstoolbox";
+}
+
 bool isMainProcess()
 {
 	int argCount;

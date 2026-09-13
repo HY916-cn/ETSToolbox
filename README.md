@@ -35,18 +35,14 @@ ETSToolbox 是一个面向 Windows 版 E听说客户端的实验性扩展。它�
 C:\Program Files (x86)\ETS
 ```
 
-安装完成后手动启动 E听说。启用“显示答案”时，再运行：
-
-```text
-C:\Program Files (x86)\ETS\etstoolbox\open-answer-console.cmd
-```
+安装完成后手动启动 E听说。启用“显示答案”后，可直接在 `F1` 面板点击“打开答案终端”。
 
 不要从第三方网站下载单独 DLL，也不要修改 `System32` 或 `SysWOW64`。
 
 ## 使用
 
 1. 启动 E听说，按 `F1` 打开面板。
-2. 按需设置控分百分比、每题随机偏移上限、提交用时、答案显示、自动录音和自动下一步。偏移单位是百分点，例如基准 `80`、上限 `5` 表示每题在 `75%` 至 `85%` 内独立取值。
+2. 按需设置控分百分比、每题随机偏移上限、提交用时、答案显示、自动录音和自动下一步。偏移单位是百分点，例如基准 `80`、上限 `5` 表示每题在 `75%` 至 `85%` 内独立取值。开启“显示答案”后，点击同一行的“打开答案终端”。
 3. 如果要自动完成听说流程，同时开启“自动录音”和“自动下一步”。
 4. 进入练习后，由用户手动点击第一次“开始”。
 5. 扩展会实时检测按钮状态：自动推进、开始录音、确认录音状态、等待 2 秒、停止录音，再继续推进。
@@ -95,6 +91,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File '.\scripts\test-install.ps1'
 
 该测试覆盖“目标 `etstoolbox` 目录完全不存在”和“目录存在但 `index.js` 缺失”两种情况。
 
+如果客户端启动后立即退出，请不要反复启动。先在 Developer PowerShell 中收集最近的应用程序错误、已安装文件哈希和备份清单：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File '.\scripts\collect-crash-diagnostics.ps1'
+```
+
+脚本只读取本机信息，结果保存在当前目录的 `ETSToolbox-crash-diagnostics.txt`，不会启动或修改 E听说。
+
 ## 技术说明
 
 - `winmm.dll` 使用 Win32 Release 和 MSVC `/MD` 构建，不依赖 `VCRUNTIME140D.dll`、`MSVCP140D.dll` 或 `ucrtbased.dll`。
@@ -102,6 +106,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File '.\scripts\test-install.ps1'
 - 作业用时只处理 `m/homework/set-use-time`。
 - 自动流程只识别听说页面操作栏中的录音、停止录音和下一步按钮。录音按钮实际变为“录音中”后才开始 2 秒计时。
 - 答案提取覆盖选择、填空、口语参考表达和常见嵌套答案字段。客户端更新内部数据结构后可能需要重新适配。
+- 本地 HTTP 服务在 DLL 工作线程中延迟初始化，答案终端按钮只能启动安装目录内固定的 `open-answer-console.cmd`，不接受外部命令或路径参数。
+- 原生日志源码、编译选项和运行时控制台统一使用 UTF-8；Windows 构建脚本也会把控制台代码页切换到 UTF-8。
 - 目前构建的 DLL 架构是 x86，因为实测 `ETSShell.exe` 为 x86；安装目录名称本身不作为架构判断依据。
 
 更详细的 DLL 构建和依赖检查见 [WINDOWS-RELEASE.md](WINDOWS-RELEASE.md)。
