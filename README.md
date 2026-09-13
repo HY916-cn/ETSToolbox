@@ -18,14 +18,30 @@ ETSToolbox 是一个面向 Windows 版 E听说客户端的实验性扩展。它�
 
 1. 关闭 E听说，并确认任务管理器中没有 `ETSShell.exe`。
 2. 从维护仓库的 [Releases](https://github.com/HY916-cn/ETSToolbox/releases) 下载 Windows x86 修复包。
-3. 备份 E听说安装目录中原有的 `winmm.dll`。
+3. 在管理员 PowerShell 中备份 E听说安装目录中原有的 `winmm.dll`：
+
+   ```powershell
+   $etsDir = 'C:\Program Files (x86)\ETS'
+   $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+   Copy-Item -LiteralPath "$etsDir\winmm.dll" -Destination "$etsDir\winmm.dll.backup-$stamp"
+   ```
+
 4. 将压缩包内的 `winmm.dll` 和 `etstoolbox` 文件夹完整解压到 E听说安装目录。默认目录通常为：
 
    ```text
    C:\Program Files (x86)\ETS
    ```
 
-5. 手动启动 E听说进行测试。弹出的控制台中应显示 CEF Hook 成功和本地服务启动信息。
+5. 确认目录结构至少包含：
+
+   ```text
+   C:\Program Files (x86)\ETS\ETSShell.exe
+   C:\Program Files (x86)\ETS\winmm.dll
+   C:\Program Files (x86)\ETS\etstoolbox\index.js
+   C:\Program Files (x86)\ETS\etstoolbox\index.iframe.js
+   ```
+
+6. 手动启动 E听说进行测试。弹出的控制台中应显示 CEF Hook 成功、本地服务在端口 8080 启动以及主页面脚本注入信息。
 
 快捷键：
 
@@ -33,6 +49,41 @@ ETSToolbox 是一个面向 Windows 版 E听说客户端的实验性扩展。它�
 - `F12`：打开客户端网页开发者工具。
 
 不要从第三方网站下载单独的运行库 DLL，也不要把文件复制到 `System32` 或 `SysWOW64`。
+
+## 当前行为
+
+- `F1` 面板中的开关会立即保存，建议在进入题目并提交结果前完成设置。
+- “控分”会等待 E听说生成 `/m/audio/sync-v2` 请求，然后把最终题目得分改写为该题满分。
+- 录音、停止、进入下一题和最终提交仍由 E听说原界面负责，扩展不会自动操作这些步骤。
+- “控制时间”会在提交完成时间的请求中改写 `use_time`。
+- F12 开发者工具中出现“我给你改分来喽”日志，表示对应的成绩同步请求已被拦截。
+
+“控分”修改的是最终得分字段，不会同步伪造完整度、准确度和流畅度。因此原始语音评测指标可能仍为 0，而题目最终得分显示为满分。这是当前实现的已知不一致，不代表语音识别结果发生了改变。
+
+## 已知限制
+
+- 不能设置指定分数；当前逻辑固定改写为题目满分。
+- “最大误差”选项虽然显示在设置中，但没有接入分数计算。
+- “显示答案”只有答案窗口的界面占位，没有读取或展示答案的实现。
+- 不会自动开始或结束录音，不会自动切换题目，也不会自动点击提交。
+- 已经完成同步的题目不会因为之后打开“控分”而被追溯修改。
+- 依赖 `EtsHelper.prototype.encode_api_body` 和特定请求路径；E听说更新后这些内部接口可能变化。
+
+## 验证与恢复
+
+如果启动时仍提示缺少 `MSVCP140D.dll`、`VCRUNTIME140D.dll` 或 `ucrtbased.dll`，说明当前加载的不是本发行版 DLL。可在 PowerShell 中核对文件哈希：
+
+```powershell
+Get-FileHash -LiteralPath 'C:\Program Files (x86)\ETS\winmm.dll' -Algorithm SHA256
+```
+
+本发行版 DLL 的 SHA-256 应为：
+
+```text
+A68720FEAD8BE2C8D72CDE10A4D7575152B1B3E97A239233A3EB8415CEB260FE
+```
+
+需要恢复时，先关闭 E听说，再把安装目录中的修复版 `winmm.dll` 移出该目录，并将前面创建的 `winmm.dll.backup-时间戳` 复制回 `winmm.dll`。不要在程序运行期间替换 DLL。
 
 ## 从源码构建
 
@@ -67,7 +118,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-release.ps1 
 
 ## 使用说明
 
-该项目依赖未公开的客户端实现细节，不能保证兼容所有 E听说版本。请先保留原文件备份，并仅在获得授权的测试环境中使用。使用过程中不要在截图、日志或 Issue 中公开姓名、学校等个人信息。
+该项目依赖未公开的客户端实现细节，不能保证兼容所有 E听说版本。请先保留原文件备份，并仅在获得授权的测试环境中用于兼容性研究。使用过程中不要在截图、日志或 Issue 中公开姓名、学校等个人信息，也不要将分数改写功能用于正式作业或测评。
 
 ## 截图
 
