@@ -57,7 +57,7 @@ namespace handlers {
 		cef_transition_type_t transition_type) {
 		Logger::info("is_main_frame:{}",frame->is_main(frame));
 		if (frame->is_main(frame)) {
-			Logger::info("Ö÷Ò³Ãæ¿ªÊ¼¼ÓÔØ£¬×¢ÈëÔ¤¼ÓÔØ½Å±¾");
+			Logger::info("ä¸»é¡µé¢å¼€å§‹åŠ è½½ï¼Œæ³¨å…¥é¢„åŠ è½½è„šæœ¬");
 			evalJS(browser, frame, "window._etb_resserver='http://localhost:8080/static';");
 			evalJS(browser, frame, "window._ets_cache_path='http://localhost:8080/ets';");
 			evalJS(browser, frame, "window._etb_api='http://localhost:8080/api';");
@@ -66,17 +66,17 @@ namespace handlers {
 				std::string str((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
 				f.close();
 				evalJS(browser, frame, str);
-			}else Logger::error("index.jsÎÄ¼ş²»´æÔÚ£¬Çë¿¼ÂÇÉ¾³ı{}ÎÄ¼ş¼Ğ²¢ÖØÆôEÌıËµ", STATIC_FILES_PATH);
+			}else Logger::error("index.jsæ–‡ä»¶ä¸å­˜åœ¨ï¼š{}ã€‚è¯·é‡æ–°è¿è¡Œå®Œæ•´å‘è¡ŒåŒ…ä¸­çš„ install.ps1 å®‰è£…å‰ç«¯èµ„æºã€‚", STATIC_FILES_PATH);
 		}
 		else {
-			Logger::info("iframe¿ªÊ¼¼ÓÔØ£¬×¢ÈëÔ¤¼ÓÔØ½Å±¾");
+			Logger::info("iframeå¼€å§‹åŠ è½½ï¼Œæ³¨å…¥é¢„åŠ è½½è„šæœ¬");
 			std::ifstream f(STATIC_FILES_PATH + "/index.iframe.js");
 			if (f.is_open()) {
 				std::string str((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
 				f.close();
 				evalJS(browser, frame, str);
 			}
-			else Logger::error("index.iframe.jsÎÄ¼ş²»´æÔÚ£¬Çë¿¼ÂÇÉ¾³ı{}ÎÄ¼ş¼Ğ²¢ÖØÆôEÌıËµ", STATIC_FILES_PATH);
+			else Logger::error("index.iframe.jsæ–‡ä»¶ä¸å­˜åœ¨ï¼š{}ã€‚è¯·é‡æ–°è¿è¡Œå®Œæ•´å‘è¡ŒåŒ…ä¸­çš„ install.ps1 å®‰è£…å‰ç«¯èµ„æºã€‚", STATIC_FILES_PATH);
 		}
 
 		return reinterpret_cast<decltype(&handlers::onLoadStart)>(origins::pOnLoadStart)(self, browser, frame, transition_type);
@@ -123,7 +123,7 @@ int h_cef_browser_host_create_browser(
 	struct _cef_dictionary_value_t* extra_info,
 	struct _cef_request_context_t* request_context)
 {
-	Logger::info("[Hook] ä¯ÀÀÆ÷´°¿Ú´´½¨");
+	Logger::info("[Hook] æµè§ˆå™¨çª—å£åˆ›å»º");
 	pGetKeyboardHandler = client->get_keyboard_handler;
 	client->get_keyboard_handler = hGetKeyboardHandler;
 	pGetLoadHandler = client->get_load_handler;
@@ -137,7 +137,7 @@ void hCefShutdown() {
 	return reinterpret_cast<decltype(&hCefShutdown)>(pCefShutdown)();
 }
 void setupHooks() {
-	Logger::info("³õÊ¼»¯HookÖĞ");
+	Logger::info("åˆå§‹åŒ–Hookä¸­");
 	DetourTransactionBegin();
 	DetourUpdateThread(GetCurrentThread());
 	pCefBrowserHostCreateBrowser = DetourFindFunction("libcef.dll", "cef_browser_host_create_browser");
@@ -148,12 +148,12 @@ void setupHooks() {
 #endif
 	DetourAttach(&pCefBrowserHostCreateBrowser, (PVOID)h_cef_browser_host_create_browser);
 	auto result = DetourTransactionCommit();
-	Logger::info("Îªlibcef.dll/cef_browser_host_create_browser({})¸½¼ÓHook ×´Ì¬£º{}", pCefBrowserHostCreateBrowser, result == NO_ERROR ? "³É¹¦" : "Ê§°Ü");
+	Logger::info("ä¸ºlibcef.dll/cef_browser_host_create_browser({})é™„åŠ Hook çŠ¶æ€ï¼š{}", pCefBrowserHostCreateBrowser, result == NO_ERROR ? "æˆåŠŸ" : "å¤±è´¥");
 	DetourTransactionBegin();
 	pCefShutdown = DetourFindFunction("libcef.dll", "cef_shutdown");
 	DetourAttach(&pCefShutdown, (PVOID)hCefShutdown);
 	result = DetourTransactionCommit();
-	Logger::info("Îªlibcef.dll/cef_shutdown({})¸½¼ÓHook ×´Ì¬£º{}", pCefShutdown, result == NO_ERROR ? "³É¹¦" : "Ê§°Ü");
+	Logger::info("ä¸ºlibcef.dll/cef_shutdown({})é™„åŠ Hook çŠ¶æ€ï¼š{}", pCefShutdown, result == NO_ERROR ? "æˆåŠŸ" : "å¤±è´¥");
 }
 
 DWORD WINAPI ThreadProc(LPVOID lpThreadParameter)
@@ -164,7 +164,7 @@ DWORD WINAPI ThreadProc(LPVOID lpThreadParameter)
 	BYTE data1[] = { 0x90, 0x90, 0x90, 0x90 };
 
 	//
-	// ÈÆ¹ıVMP3.x µÄÄÚ´æ±£»¤
+	// ç»•è¿‡VMP3.x çš„å†…å­˜ä¿æŠ¤
 	//
 	hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE, FALSE, GetCurrentProcessId());
 	if (hProcess)
@@ -175,9 +175,9 @@ DWORD WINAPI ThreadProc(LPVOID lpThreadParameter)
 	bool isMainProc = isMainProcess();
 	if (isMainProc)
 		createConsole();
-	Logger::info("½ø³Ì²ÎÊı£º{} Ö÷½ø³Ì£º{}", GetCommandLineA(), isMainProc);
+	Logger::info("è¿›ç¨‹å‚æ•°ï¼š{} ä¸»è¿›ç¨‹ï¼š{}", GetCommandLineA(), isMainProc);
 	setupHooks();
 	server.listen();
-	Logger::info("¼ÓÔØÍê³É¡£°´ÏÂF12¿É´ò¿ªjs¿ØÖÆÌ¨¡£");
+	Logger::info("åŠ è½½å®Œæˆã€‚æŒ‰ä¸‹F12å¯æ‰“å¼€jsæ§åˆ¶å°ã€‚");
 	return 0;
 }

@@ -4,7 +4,7 @@ This repair must be completed on the Windows computer that contains the real ETS
 
 ## Prerequisites
 
-- Visual Studio 2022 with Desktop development with C++, MSVC x86/x64 build tools, CMake tools, and a Windows 10 or 11 SDK.
+- Visual Studio 2022 or later with Desktop development with C++, MSVC x86/x64 build tools, CMake tools, and a Windows 10 or 11 SDK.
 - An official standalone [vcpkg](https://github.com/microsoft/vcpkg) checkout with `VCPKG_ROOT` set to its root directory.
 - PowerShell 5.1 or later.
 

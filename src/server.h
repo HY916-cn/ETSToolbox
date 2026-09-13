@@ -1,12 +1,9 @@
 #pragma once
 #include<httplib.h>
 #include<thread>
+#include"utils.h"
 
-#ifdef DEBUG_MODE
-#define STATIC_FILES_PATH (std::filesystem::path(getenv("userprofile"))/"etstoolbox").string()
-#else
-#define STATIC_FILES_PATH (std::filesystem::absolute(".")/"etstoolbox").string()
-#endif
+#define STATIC_FILES_PATH (getModuleDirectory()/"etstoolbox").string()
 
 class ServerWrapper {
 private:

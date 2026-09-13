@@ -2,6 +2,7 @@
 #include<filesystem>
 #include<cstdio>
 #include"server.h"
+#include"utils.h"
 #include"logger.h"
 #include<fstream>
 
@@ -42,7 +43,7 @@ void ServerWrapper::shutdown()
 
 void ServerWrapper::listen()
 {
-	Logger::info("服务器开启于端口8080");
+	Logger::info("鏈嶅姟鍣ㄥ紑鍚簬绔彛8080锛屽墠绔洰褰曪細{}", STATIC_FILES_PATH);
 	std::thread t = std::thread([this]() {
 		this->server.listen("127.0.0.1", 8080);
 		});

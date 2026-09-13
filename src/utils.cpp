@@ -1,4 +1,7 @@
 #include"utils.h"
+#include<Windows.h>
+
+extern "C" IMAGE_DOS_HEADER __ImageBase;
 
 std::wstring to_wide_string(const std::string& input) {
 	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
@@ -8,6 +11,18 @@ std::wstring to_wide_string(const std::string& input) {
 std::string to_byte_string(const std::wstring& input) {
 	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
 	return converter.to_bytes(input);
+}
+
+std::filesystem::path getModuleDirectory()
+{
+	std::wstring modulePath(32768, L'\0');
+	const auto module = reinterpret_cast<HMODULE>(&__ImageBase);
+	const DWORD length = GetModuleFileNameW(module, modulePath.data(), static_cast<DWORD>(modulePath.size()));
+	if (length == 0 || length >= modulePath.size()) {
+		return std::filesystem::current_path();
+	}
+	modulePath.resize(length);
+	return std::filesystem::path(modulePath).parent_path();
 }
 
 bool isMainProcess()

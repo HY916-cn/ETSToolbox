@@ -1,127 +1,111 @@
 # ETSToolbox
 
-ETSToolbox 是一个面向 Windows 版 E听说客户端的实验性扩展。它通过 `winmm.dll` 代理加载，在客户端内置的 CEF 页面中注入配套前端脚本。
+ETSToolbox 是一个面向 Windows 版 E听说客户端的实验性扩展。它通过 `winmm.dll` 代理加载，在客户端的听说练习页面中注入前端脚本。
 
-此维护版本修复了 1.0.2 发布包误用 Debug CRT 的问题，并补充了可复现的 x86 Release 构建、依赖检查和备份替换流程。
+## 功能
 
-## 项目状态
+- 按百分比调整听说题目的最终得分，可设置每道题的随机偏移上限。
+- 设置作业记录中的提交用时。
+- 在独立终端中显示当前题目的参考答案。
+- 自动开始录音，并在客户端允许的 2 秒后停止。
+- 用户手动点击整套练习的“开始”后，可自动点击后续“下一步”，直到流程结束。
 
-- 已在 x86 `ETSShell.exe` 上完成 Release 构建与启动验证。
-- 生成的 DLL 使用 MSVC Release CRT（`/MD`），不再依赖 `MSVCP140D.dll`、`VCRUNTIME140D.dll` 或 `ucrtbased.dll`。
-- 主页面、F1 设置面板和 F12 开发者工具可以正常打开。
-- 上游项目已停止维护，客户端更新后部分功能可能失效。
-- “显示答案”目前只有界面占位，没有答案提取实现；“最大误差”配置也未接入实际逻辑。
+按 `F1` 打开设置面板。“自动录音”和“自动下一步”可以分别开启；两者同时开启时组成完整自动流程。按 `F12` 可打开客户端网页开发者工具查看实时状态日志。
 
-配套前端源码位于 [Howie114514/ETSToolbox-js](https://github.com/Howie114514/ETSToolbox-js)。
+## 适用范围
+
+所有扩展功能只在已识别的听说练习页面生效。读写、单词、配音、主页面和结果页面不会执行改分、改用时、答案输出或自动点击。
+
+本项目只用于个人、本地、离线学习测试。请勿在学校、机构、正式考试、正式作业、共享设备或其他公共环境中使用，也不要用它影响真实成绩或他人数据。
 
 ## 安装
 
-1. 关闭 E听说，并确认任务管理器中没有 `ETSShell.exe`。
-2. 从维护仓库的 [Releases](https://github.com/HY916-cn/ETSToolbox/releases) 下载 Windows x86 修复包。
-3. 在管理员 PowerShell 中备份 E听说安装目录中原有的 `winmm.dll`：
+1. 从本仓库的 [Releases](https://github.com/HY916-cn/ETSToolbox/releases) 下载最新的 Windows x86 完整包。
+2. 关闭 E听说，确认任务管理器中没有 `ETSShell.exe`。
+3. 把压缩包解压到单独目录，以管理员身份打开 PowerShell。
+4. 进入解压后的目录并运行：
 
    ```powershell
-   $etsDir = 'C:\Program Files (x86)\ETS'
-   $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
-   Copy-Item -LiteralPath "$etsDir\winmm.dll" -Destination "$etsDir\winmm.dll.backup-$stamp"
+   powershell -NoProfile -ExecutionPolicy Bypass -File '.\install.ps1'
    ```
 
-4. 将压缩包内的 `winmm.dll` 和 `etstoolbox` 文件夹完整解压到 E听说安装目录。默认目录通常为：
-
-   ```text
-   C:\Program Files (x86)\ETS
-   ```
-
-5. 确认目录结构至少包含：
-
-   ```text
-   C:\Program Files (x86)\ETS\ETSShell.exe
-   C:\Program Files (x86)\ETS\winmm.dll
-   C:\Program Files (x86)\ETS\etstoolbox\index.js
-   C:\Program Files (x86)\ETS\etstoolbox\index.iframe.js
-   ```
-
-6. 手动启动 E听说进行测试。弹出的控制台中应显示 CEF Hook 成功、本地服务在端口 8080 启动以及主页面脚本注入信息。
-
-快捷键：
-
-- `F1`：打开设置面板。
-- `F12`：打开客户端网页开发者工具。
-
-不要从第三方网站下载单独的运行库 DLL，也不要把文件复制到 `System32` 或 `SysWOW64`。
-
-## 当前行为
-
-- `F1` 面板中的开关会立即保存，建议在进入题目并提交结果前完成设置。
-- “控分”会等待 E听说生成 `/m/audio/sync-v2` 请求，然后把最终题目得分改写为该题满分。
-- 录音、停止、进入下一题和最终提交仍由 E听说原界面负责，扩展不会自动操作这些步骤。
-- “控制时间”会在提交完成时间的请求中改写 `use_time`。
-- F12 开发者工具中出现“我给你改分来喽”日志，表示对应的成绩同步请求已被拦截。
-
-“控分”修改的是最终得分字段，不会同步伪造完整度、准确度和流畅度。因此原始语音评测指标可能仍为 0，而题目最终得分显示为满分。这是当前实现的已知不一致，不代表语音识别结果发生了改变。
-
-## 已知限制
-
-- 不能设置指定分数；当前逻辑固定改写为题目满分。
-- “最大误差”选项虽然显示在设置中，但没有接入分数计算。
-- “显示答案”只有答案窗口的界面占位，没有读取或展示答案的实现。
-- 不会自动开始或结束录音，不会自动切换题目，也不会自动点击提交。
-- 已经完成同步的题目不会因为之后打开“控分”而被追溯修改。
-- 依赖 `EtsHelper.prototype.encode_api_body` 和特定请求路径；E听说更新后这些内部接口可能变化。
-
-## 验证与恢复
-
-如果启动时仍提示缺少 `MSVCP140D.dll`、`VCRUNTIME140D.dll` 或 `ucrtbased.dll`，说明当前加载的不是本发行版 DLL。可在 PowerShell 中核对文件哈希：
-
-```powershell
-Get-FileHash -LiteralPath 'C:\Program Files (x86)\ETS\winmm.dll' -Algorithm SHA256
-```
-
-本发行版 DLL 的 SHA-256 应为：
+安装脚本会校验文件、备份原文件并复制新版本，但不会自动启动 E听说。默认安装目录是：
 
 ```text
-A68720FEAD8BE2C8D72CDE10A4D7575152B1B3E97A239233A3EB8415CEB260FE
+C:\Program Files (x86)\ETS
 ```
 
-需要恢复时，先关闭 E听说，再把安装目录中的修复版 `winmm.dll` 移出该目录，并将前面创建的 `winmm.dll.backup-时间戳` 复制回 `winmm.dll`。不要在程序运行期间替换 DLL。
+安装完成后手动启动 E听说。启用“显示答案”时，再运行：
+
+```text
+C:\Program Files (x86)\ETS\etstoolbox\open-answer-console.cmd
+```
+
+不要从第三方网站下载单独 DLL，也不要修改 `System32` 或 `SysWOW64`。
+
+## 使用
+
+1. 启动 E听说，按 `F1` 打开面板。
+2. 按需设置控分百分比、每题随机偏移上限、提交用时、答案显示、自动录音和自动下一步。偏移单位是百分点，例如基准 `80`、上限 `5` 表示每题在 `75%` 至 `85%` 内独立取值。
+3. 如果要自动完成听说流程，同时开启“自动录音”和“自动下一步”。
+4. 进入练习后，由用户手动点击第一次“开始”。
+5. 扩展会实时检测按钮状态：自动推进、开始录音、确认录音状态、等待 2 秒、停止录音，再继续推进。
+
+如果按钮状态没有变化，扩展会按受控间隔重试。可在 `F12` 控制台中查看带有 `[ETSToolbox 自动流程]` 前缀的状态记录。
 
 ## 从源码构建
 
-准备以下环境：
+### 后端 DLL（Windows）
 
-- Visual Studio 2022 或更高版本，并安装“使用 C++ 的桌面开发”、MSVC x86/x64 工具、CMake 工具和 Windows SDK。
-- 官方独立版 [vcpkg](https://github.com/microsoft/vcpkg)，并配置 `VCPKG_ROOT`。
-- PowerShell 5.1 或更高版本。
-
-克隆仓库并初始化子模块：
+需要 Visual Studio C++、Windows SDK、CMake、PowerShell 和 vcpkg。克隆时要初始化子模块：
 
 ```powershell
 git clone --recurse-submodules https://github.com/HY916-cn/ETSToolbox.git
-Set-Location .\ETSToolbox
+Set-Location '.\ETSToolbox'
+$env:VCPKG_ROOT = 'C:\File\biuld\vcpkg'
+powershell -NoProfile -ExecutionPolicy Bypass -File '.\scripts\build-release.ps1' -VcpkgRoot $env:VCPKG_ROOT
 ```
 
-只构建和检查，不修改 E听说安装目录：
+构建脚本会读取 `ETSShell.exe` 的 PE 架构、安装匹配的 Detours、使用 MSVC Release CRT 构建，并检查 Debug CRT 依赖。确认报告后才可加 `-Deploy` 安装。
+
+### 前端脚本（macOS、Linux 或 Windows）
+
+```bash
+git clone https://github.com/HY916-cn/ETSToolbox-js.git
+cd ETSToolbox-js
+npm ci
+npm test
+npm run build
+```
+
+完整测试与构建命令：
+
+```bash
+npm ci
+npm test
+npm run build
+git diff --check
+```
+
+Windows 安装器测试：
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-release.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File '.\scripts\test-install.ps1'
 ```
 
-确认报告无误后，可以在管理员 PowerShell 中执行备份和替换：
+该测试覆盖“目标 `etstoolbox` 目录完全不存在”和“目录存在但 `index.js` 缺失”两种情况。
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-release.ps1 -Deploy
-```
+## 技术说明
 
-脚本会检查 `ETSShell.exe` 的实际 PE 架构、安装 `detours:x86-windows`、构建 Release DLL，并使用 `dumpbin /dependents` 检查 Debug CRT 依赖。部署前还会为原 DLL 创建带时间戳的备份，完成后不会自动启动 E听说。
+- `winmm.dll` 使用 Win32 Release 和 MSVC `/MD` 构建，不依赖 `VCRUNTIME140D.dll`、`MSVCP140D.dll` 或 `ucrtbased.dll`。
+- 控分只处理 `/m/audio/sync-v2`。基准百分比和随机偏移上限均限制为 `0` 至 `100`；每道题独立随机，越界时重新生成。最终百分比和分数最多保留两位小数，并遵循客户端分值步进。
+- 作业用时只处理 `m/homework/set-use-time`。
+- 自动流程只识别听说页面操作栏中的录音、停止录音和下一步按钮。录音按钮实际变为“录音中”后才开始 2 秒计时。
+- 答案提取覆盖选择、填空、口语参考表达和常见嵌套答案字段。客户端更新内部数据结构后可能需要重新适配。
+- 目前构建的 DLL 架构是 x86，因为实测 `ETSShell.exe` 为 x86；安装目录名称本身不作为架构判断依据。
 
-更完整的说明见 [WINDOWS-RELEASE.md](WINDOWS-RELEASE.md)。
+更详细的 DLL 构建和依赖检查见 [WINDOWS-RELEASE.md](WINDOWS-RELEASE.md)。
 
-## 使用说明
+## 许可证
 
-该项目依赖未公开的客户端实现细节，不能保证兼容所有 E听说版本。请先保留原文件备份，并仅在获得授权的测试环境中用于兼容性研究。使用过程中不要在截图、日志或 Issue 中公开姓名、学校等个人信息，也不要将分数改写功能用于正式作业或测评。
-
-## 截图
-
-![设置面板](assets/image.png)
-
-![运行界面](assets/screenshot1.png)
+本维护分支新增的原创代码以 [MIT License](LICENSE) 提供。上游仓库没有声明许可证，因此上游既有代码的权利状态不会因本文件而改变；MIT 授权仅覆盖维护者有权许可的新增内容。
