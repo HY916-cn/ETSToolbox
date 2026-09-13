@@ -62,7 +62,7 @@ C:\Program Files (x86)\ETS\etstoolbox\open-answer-console.cmd
 ```powershell
 git clone --recurse-submodules https://github.com/HY916-cn/ETSToolbox.git
 Set-Location '.\ETSToolbox'
-$env:VCPKG_ROOT = 'C:\File\biuld\vcpkg'
+$env:VCPKG_ROOT = 'C:\File\build\vcpkg'
 powershell -NoProfile -ExecutionPolicy Bypass -File '.\scripts\build-release.ps1' -VcpkgRoot $env:VCPKG_ROOT
 ```
 
