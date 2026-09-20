@@ -18,7 +18,33 @@ if ([string]::IsNullOrWhiteSpace($PackageRoot)) {
 if (-not $SkipAdministratorCheck) {
     $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
     if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-        throw 'Run PowerShell as Administrator, then run this script again.'
+        if ([string]::IsNullOrWhiteSpace($PSCommandPath)) {
+            throw 'The installer path could not be resolved for administrator elevation.'
+        }
+
+        $elevationArguments = @(
+            '-NoProfile',
+            '-ExecutionPolicy', 'Bypass',
+            '-File', ('"{0}"' -f $PSCommandPath),
+            '-EtsRoot', ('"{0}"' -f $EtsRoot),
+            '-PackageRoot', ('"{0}"' -f $PackageRoot)
+        )
+        if ($SkipProcessCheck) {
+            $elevationArguments += '-SkipProcessCheck'
+        }
+
+        Write-Host 'Requesting administrator permission...'
+        $elevatedProcess = Start-Process `
+            -FilePath 'powershell.exe' `
+            -Verb RunAs `
+            -ArgumentList $elevationArguments `
+            -Wait `
+            -PassThru
+        if ($elevatedProcess.ExitCode -ne 0) {
+            throw "The elevated installer exited with code $($elevatedProcess.ExitCode)."
+        }
+        Write-Host 'The elevated installer completed successfully.'
+        exit 0
     }
 }
 

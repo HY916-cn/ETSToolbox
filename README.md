@@ -53,13 +53,13 @@ ETSToolbox 是面向 Windows 版 E听说客户端的本地扩展实验项目。�
 1. 从 [Releases](https://github.com/HY916-cn/ETSToolbox/releases) 下载最新的 `ETSToolbox-*-win32.zip`。
 2. 完全退出客户端，确认任务管理器中没有 `ETSShell.exe`。
 3. 将压缩包完整解压到单独目录，不要直接在压缩包内运行脚本。
-4. 以管理员身份打开 PowerShell，进入解压目录后运行：
+4. 打开 PowerShell，进入解压目录后运行：
 
    ```powershell
    powershell -NoProfile -ExecutionPolicy Bypass -File '.\install.ps1'
    ```
 
-安装器会校验文件、备份现有 DLL 和前端资源，然后复制新版本。安装完成后不会自动启动客户端，可由用户手动测试。默认目标目录为：
+普通 PowerShell 中运行时，安装器会自动请求管理员权限；在 Windows 的 UAC 提示中选择“是”即可继续。安装器会校验文件、备份现有 DLL 和前端资源，然后复制新版本。安装完成后不会自动启动客户端，可由用户手动测试。默认目标目录为：
 
 ```text
 C:\Program Files (x86)\ETS
