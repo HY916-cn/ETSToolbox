@@ -1,5 +1,8 @@
 # ETSToolbox
 
+> [!WARNING]
+> **由于官方修复，本项目已停用，不再维护。**
+
 ETSToolbox 是面向 Windows 版 E听说客户端的本地扩展实验项目。项目通过 `winmm.dll` 代理加载前端脚本，用于研究桌面客户端的页面注入、本地数据处理和交互自动化。
 
 > [!WARNING]
